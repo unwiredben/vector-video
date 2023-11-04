@@ -1,0 +1,7 @@
+readme
+
+
+ffmpeg -i "Rick Astley - Never Gonna Give You Up (Official Music Video) [dQw4w9WgXcQ].webm" -vf "crop=in_h" -an -t 00:00:20 -s 240x240 -vcodec mpeg1video rickroll.mpg
+
+ffmpeg -i "Rick Astley - Never Gonna Give You Up (Official Music Video) [dQw4w9WgXcQ].webm" -vf "crop=in_h" -an -t 00:00:20 -s 240x240 -vf hue=s=0 -vcodec mpeg1video -s 240x240 rickroll.mpg
+ffmpeg -i "Rick Astley - Never Gonna Give You Up (Official Music Video) [dQw4w9WgXcQ].webm" -vf "crop=in_h" -an -t 00:00:20 -s 240x240 -vf hue=s=0 -vcodec mpeg1video -s 240x240 rickroll.mpg
