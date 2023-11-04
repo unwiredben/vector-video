@@ -33,6 +33,8 @@ void* my_realloc(const char* what, void* ptr, std::size_t new_size) {
 constexpr int WIDTH = 240;
 constexpr int HEIGHT = 240;
 
+constexpr int MS_PER_FRAME = 33;
+
 constexpr int USER_BUTTON = 19;
 
 TFT_eSPI tft = TFT_eSPI();
@@ -76,12 +78,11 @@ void play_video() {
         auto *frame = plm_decode_video(plm);
         if (frame) show_frame(frame);
 
-        if (++frame_count == 30) {
-            frame_count = 0;
-            auto now = millis();
-            Serial.println(now - last_time);
-            last_time = now;
+        auto now = millis();
+        if (now - last_time < MS_PER_FRAME) {
+            delay(MS_PER_FRAME - (now - last_time));
         }
+        last_time = now;
     }
 }
 
@@ -97,5 +98,4 @@ void setup() {
 void loop() {
 }
 
-// TODO: figure out why loop fails
 // TODO: figure out frame corruption
