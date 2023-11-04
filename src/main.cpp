@@ -33,6 +33,8 @@ void* my_realloc(const char* what, void* ptr, std::size_t new_size) {
 constexpr int WIDTH = 240;
 constexpr int HEIGHT = 240;
 
+constexpr int USER_BUTTON = 19;
+
 TFT_eSPI tft = TFT_eSPI();
 
 inline int16_t convertPixel(int8_t luma) {
@@ -69,6 +71,8 @@ void play_video() {
 
     // Decode forever until power is removed
     while (true) {
+        // pause when user button held
+       while (digitalRead(USER_BUTTON) == false) {}
         auto *frame = plm_decode_video(plm);
         if (frame) show_frame(frame);
 
