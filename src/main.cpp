@@ -70,7 +70,7 @@ void play_video() {
     // Decode forever until power is removed
     while (true) {
         auto *frame = plm_decode_video(plm);
-        show_frame(frame);
+        if (frame) show_frame(frame);
 
         if (++frame_count == 30) {
             frame_count = 0;
