@@ -26,6 +26,7 @@ void* my_realloc(const char* what, void* ptr, std::size_t new_size) {
 #define PLM_REALLOC(what, p, sz) my_realloc(what, p, sz)
 #include "pl_mpeg.h"
 
+#include "ts.h"
 #include "gamecube.h"
 #include "st_intro_color.h"
 #include "rickroll_wide.h"
@@ -241,6 +242,7 @@ bool demo_mode = false;
 
 void setup() {
     demo_mode = !digitalRead(USER_BUTTON);
+    while (digitalRead(USER_BUTTON) == false) {}
     Serial.begin(19200);
     // while (!Serial) {}
     Serial.println("starting on Pico");
@@ -248,7 +250,10 @@ void setup() {
     tft.fillScreen(TFT_BLACK);
     next_shift_mode(); // set to gray to start
     if (demo_mode) {
+        play_mono_video(ts_mpg, ts_mpg_len, false);
+        play_static(500);
         play_mono_video(gamecube_mpg, gamecube_mpg_len, false);
+        play_static(500);
     }
 }
 
