@@ -21,3 +21,35 @@ https://nycr.social/@unwiredben/111356286237886104 has my first public video tea
 * https://github.com/Bodmer/TFT_eSPI/ - the display library I used. Got plans to contribute back to this one.
 * https://github.com/earlephilhower/arduino-pico - a better Pico SDK than the default mBed one
 * https://platformio.org/ - the VSCode IDE extension that made building C++ code for the badge relatively easy
+
+# FFMPEG conversion examples
+
+Monochrome
+
+```
+ffmpeg -i INPUT.mp4 -vf "crop=in_h" -an -t 00:00:20 -s 240x240 -vf hue=s=0 -vcodec mpeg1video OUTPUT.mpg
+```
+
+Color
+
+```
+ffmpeg -i INPUT.mp4 -vf "crop=in_h" -an -t 00:00:20 -s 240x240 -vcodec mpeg1video OUTPUT.mpg
+```
+
+In my testing, I usually made smaller MPEG-1 files in color mode; it may be that the
+video filtering to remove hue is adding noise to the original video.
+
+I found using ffplay useful in previewing the output, you just need to leave off the output filename.
+
+You can jump-cut MPEG-1 files together just by concatenating them, so you can make a larger video by taking multiple smaller ones.
+
+# FFMPEG to C include
+
+I'm doing this manually using the command
+
+```
+xxd -i video.mpg | sed -e "s/unsigned/const unsigned/" > MPEG1Video.h
+```
+
+The naming of the data in the header file depends on the input filename, so you may want an addition sed stage
+to convert to a generic name to avoid needing to change your player source.
