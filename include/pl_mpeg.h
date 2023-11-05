@@ -3418,7 +3418,6 @@ void plm_video_decode_block(plm_video_t *self, int block) {
 		}
 	}
 	else {
-		if (self->luma_only) return;
 		d = (block == 4) ? self->frame_current.cb.data : self->frame_current.cr.data;
 		dw = self->chroma_width;
 		di = ((self->mb_row * self->luma_width) << 2) + (self->mb_col << 3);
@@ -3430,12 +3429,14 @@ void plm_video_decode_block(plm_video_t *self, int block) {
 		// Overwrite (no prediction)
 		if (n == 1) {
 			int clamped = plm_clamp((s[0] + 128) >> 8);
-			PLM_BLOCK_SET(d, di, dw, si, 8, 8, clamped);
+			if (dw > 0)
+				PLM_BLOCK_SET(d, di, dw, si, 8, 8, clamped);
 			s[0] = 0;
 		}
 		else {
 			plm_video_idct(s);
-			PLM_BLOCK_SET(d, di, dw, si, 8, 8, plm_clamp(s[si]));
+			if (dw > 0)
+				PLM_BLOCK_SET(d, di, dw, si, 8, 8, plm_clamp(s[si]));
 			memset(self->block_data, 0, sizeof(self->block_data));
 		}
 	}
@@ -3443,12 +3444,14 @@ void plm_video_decode_block(plm_video_t *self, int block) {
 		// Add data to the predicted macroblock
 		if (n == 1) {
 			int value = (s[0] + 128) >> 8;
-			PLM_BLOCK_SET(d, di, dw, si, 8, 8, plm_clamp(d[di] + value));
+			if (dw > 0)
+				PLM_BLOCK_SET(d, di, dw, si, 8, 8, plm_clamp(d[di] + value));
 			s[0] = 0;
 		}
 		else {
 			plm_video_idct(s);
-			PLM_BLOCK_SET(d, di, dw, si, 8, 8, plm_clamp(d[di] + s[si]));
+			if (dw > 0)
+				PLM_BLOCK_SET(d, di, dw, si, 8, 8, plm_clamp(d[di] + s[si]));
 			memset(self->block_data, 0, sizeof(self->block_data));
 		}
 	}
