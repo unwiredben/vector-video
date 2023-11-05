@@ -44,9 +44,8 @@ int current_shift_mode = -1;
 int red_shift_down, blue_shift_down, green_shift_down;
 int red_shift_up, blue_shift_up, green_shift_up;
 
-#define NORMAL_MODES 10
-#define RAINBOW_MODE 9
-#define PRIDE_START 10
+#define NORMAL_MODES 8
+#define RAINBOW_MODE 7
 int shift_modes[][6] = {
     { 0, 0, 0, 0, 0, 0 }, // gray
     { 8, 0, 8, 0, 0, 0 }, // green
@@ -55,9 +54,8 @@ int shift_modes[][6] = {
     { 8, 0, 0, 0, 0, 0 }, // cyan
     { 0, 0, 8, 0, 0, 0 }, // yellow
     { 0, 8, 0, 0, 0, 0 }, // magenta
-    { 7, 7, 7, 7, 7, 7 }, // b&w
-    { 6, 6, 6, 6, 6, 6 }, // poster
-    { 0, 0, 0, 0, 0, 0 }, // RAINBOW MODE
+//    { 7, 7, 7, 7, 7, 7 }, // b&w
+//    { 6, 6, 6, 6, 6, 6 }, // poster
     { 0, 8, 8, 0, 0, 0 }, // PRIDE FLAG STRIPES - RED
     { 2, 2, 8, 0, 0, 8 }, // PRIDE FLAG STRIPES - ORANGE
     { 0, 0, 8, 0, 0, 0 }, // PRIDE FLAG STRIPES - YELLOW
@@ -97,7 +95,7 @@ void show_frame(plm_frame_t *frame) {
     int i = 0;
     for (int y = 0; y < height; ++y) {
         if (rainbowMode)
-            set_shift_mode((y / 40) + PRIDE_START);
+            set_shift_mode((y / 40) + RAINBOW_MODE);
         for (int x = 0; x < width; ++x) {
             uint32_t luma = frame->y.data[++i];
             tft.pushColor(convertPixel(luma));
@@ -227,7 +225,7 @@ void play_static(int msDuration) {
     auto now = millis();
     auto last_time = now;
     auto endTime = now + msDuration;
-    while ((now = millis()) < endTime) {
+    while ((now = millis()) < endTime || !digitalRead(USER_BUTTON)) {
         show_static_frame();
         if (now - last_time < MS_PER_FRAME) {
             delay(MS_PER_FRAME - (now - last_time));
@@ -251,18 +249,18 @@ void setup() {
     next_shift_mode(); // set to gray to start
     if (demo_mode) {
         play_mono_video(ts_mpg, ts_mpg_len, false);
-        play_static(500);
+        play_static(1000);
         play_mono_video(gamecube_mpg, gamecube_mpg_len, false);
-        play_static(500);
+        play_static(1000);
     }
 }
 
 void loop() {
     play_mono_video(st_intro_color_mpg, st_intro_color_mpg_len, false);
-    play_static(500);
+    play_static(1000);
     if (demo_mode) {
         play_color_video(rickroll_wide_mpg, rickroll_wide_mpg_len, false);
-        play_static(500);
+        play_static(1000);
     }
 }
 
