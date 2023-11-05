@@ -26,6 +26,7 @@ void* my_realloc(const char* what, void* ptr, std::size_t new_size) {
 #define PLM_REALLOC(what, p, sz) my_realloc(what, p, sz)
 #include "pl_mpeg.h"
 
+#include "gamecube.h"
 #include "st_intro_color.h"
 #include "rickroll_wide.h"
 
@@ -246,11 +247,12 @@ void setup() {
 }
 
 void loop() {
-    play_static(500);
-    tft.fillScreen(TFT_BLACK);
-    play_color_video(rickroll_wide_mpg, rickroll_wide_mpg_len, false);
+    play_mono_video(gamecube_mpg, gamecube_mpg_len, false);
     play_static(500);
     tft.fillScreen(TFT_BLACK);
     play_mono_video(st_intro_color_mpg, st_intro_color_mpg_len, false);
+    play_static(500);
+    tft.fillScreen(TFT_BLACK);
+    play_color_video(rickroll_wide_mpg, rickroll_wide_mpg_len, false);
 }
 
