@@ -26,9 +26,8 @@ void* my_realloc(const char* what, void* ptr, std::size_t new_size) {
 #define PLM_REALLOC(what, p, sz) my_realloc(what, p, sz)
 #include "pl_mpeg.h"
 
-#include "MPEG1Video.h"
-#define VIDEO_DATA full_mpg
-#define VIDEO_LEN  full_mpg_len
+#include "st_intro_color.h"
+#include "rickroll.h"
 
 constexpr int WIDTH = 240;
 constexpr int HEIGHT = 240;
@@ -103,15 +102,15 @@ void show_frame(plm_frame_t *frame) {
     tft.endWrite();
 }
 
-void play_video() {
+void play_video(uint8_t const* data, size_t len, bool loop) {
     plm_t *plm =
         plm_create_with_memory(
-                const_cast<uint8_t*>(VIDEO_DATA),
-                VIDEO_LEN,
+                const_cast<uint8_t*>(data),
+                len,
                 false, true);
 
     plm_set_audio_enabled(plm, false);
-    plm_set_loop(plm, true);
+    plm_set_loop(plm, loop);
 
     int frame_count = 0;
     auto last_time = millis();
@@ -131,7 +130,11 @@ void play_video() {
             delay(MS_PER_FRAME - (now - last_time));
         }
         last_time = now;
+
+        // if not looping, NULL frame means end
+        if (!loop && !frame) break;
     }
+    plm_destroy(plm);
 }
 
 void show_static_frame() {
@@ -171,11 +174,12 @@ void setup() {
     tft.init();
     tft.fillScreen(TFT_BLACK);
     next_shift_mode(); // set to gray to start
-    play_static(1000);
-    play_video();
 }
 
 void loop() {
+    play_static(500);
+    play_video(st_intro_color_mpg, st_intro_color_mpg_len, false);
+    play_static(500);
+    play_video(rickroll_mpg, rickroll_mpg_len, false);
 }
 
-// TODO: figure out frame corruption
