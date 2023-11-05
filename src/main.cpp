@@ -208,14 +208,11 @@ void play_color_video(uint8_t const* data, size_t len, bool loop) {
 
 
 void show_static_frame() {
-    bool rainbowMode = current_shift_mode == RAINBOW_MODE;
     tft.startWrite();
     tft.setAddrWindow(0, 0, WIDTH, HEIGHT);
     int numPixels = WIDTH * HEIGHT;
     int i = 0;
     for (int y = 0; y < HEIGHT; ++y) {
-        if (rainbowMode)
-            set_shift_mode((y / 40) + PRIDE_START);
         for (int x = 0; x < WIDTH; ++x) {
             uint32_t luma = random(256);
             tft.pushColor(convertPixel(luma));
@@ -225,6 +222,7 @@ void show_static_frame() {
 }
 
 void play_static(int msDuration) {
+    set_shift_mode(0);
     auto now = millis();
     auto last_time = now;
     auto endTime = now + msDuration;
@@ -235,24 +233,31 @@ void play_static(int msDuration) {
         }
         last_time = now;
     }
+    set_shift_mode(current_shift_mode);
+    tft.fillScreen(TFT_BLACK);
 }
 
+bool demo_mode = false;
+
 void setup() {
+    demo_mode = !digitalRead(USER_BUTTON);
     Serial.begin(19200);
     // while (!Serial) {}
     Serial.println("starting on Pico");
     tft.init();
     tft.fillScreen(TFT_BLACK);
     next_shift_mode(); // set to gray to start
+    if (demo_mode) {
+        play_mono_video(gamecube_mpg, gamecube_mpg_len, false);
+    }
 }
 
 void loop() {
-    play_mono_video(gamecube_mpg, gamecube_mpg_len, false);
-    play_static(500);
-    tft.fillScreen(TFT_BLACK);
     play_mono_video(st_intro_color_mpg, st_intro_color_mpg_len, false);
     play_static(500);
-    tft.fillScreen(TFT_BLACK);
-    play_color_video(rickroll_wide_mpg, rickroll_wide_mpg_len, false);
+    if (demo_mode) {
+        play_color_video(rickroll_wide_mpg, rickroll_wide_mpg_len, false);
+        play_static(500);
+    }
 }
 
