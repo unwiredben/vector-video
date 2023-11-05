@@ -39,17 +39,62 @@ constexpr int USER_BUTTON = 19;
 
 TFT_eSPI tft = TFT_eSPI();
 
-inline int16_t convertPixel(int8_t luma) {
-    // return tft.color565(luma / 8, luma, luma / 8);
-    return tft.color565(0, luma, 0);
+int current_shift_mode = -1;
+int red_shift_down, blue_shift_down, green_shift_down;
+int red_shift_up, blue_shift_up, green_shift_up;
+
+#define NORMAL_MODES 10
+#define RAINBOW_MODE 9
+#define PRIDE_START 10
+int shift_modes[][6] = {
+    { 0, 0, 0, 0, 0, 0 }, // gray
+    { 8, 0, 8, 0, 0, 0 }, // green
+    { 0, 8, 8, 0, 0, 0 }, // red
+    { 8, 8, 0, 0, 0, 0 }, // blue
+    { 8, 0, 0, 0, 0, 0 }, // cyan
+    { 0, 0, 8, 0, 0, 0 }, // yellow
+    { 0, 8, 0, 0, 0, 0 }, // magenta
+    { 7, 7, 7, 7, 7, 7 }, // b&w
+    { 6, 6, 6, 6, 6, 6 }, // poster
+    { 0, 0, 0, 0, 0, 0 }, // RAINBOW MODE
+    { 0, 8, 8, 0, 0, 0 }, // PRIDE FLAG STRIPES - RED
+    { 2, 2, 8, 0, 0, 8 }, // PRIDE FLAG STRIPES - ORANGE
+    { 0, 0, 8, 0, 0, 0 }, // PRIDE FLAG STRIPES - YELLOW
+    { 8, 0, 8, 0, 0, 0 }, // PRIDE FLAG STRIPES - GREEN
+    { 8, 8, 0, 0, 0, 0 }, // PRIDE FLAG STRIPES - BLUE
+    { 4, 8, 4, 4, 0, 4 }, // PRIDE FLAG STRIPES - VIOLET
+};
+
+void set_shift_mode(int index) {
+    red_shift_down   = shift_modes[index][0];
+    green_shift_down = shift_modes[index][1];
+    blue_shift_down  = shift_modes[index][2];
+    red_shift_up     = shift_modes[index][3];
+    green_shift_up   = shift_modes[index][4];
+    blue_shift_up    = shift_modes[index][5];
+}
+
+void next_shift_mode() {
+    current_shift_mode = (current_shift_mode + 1) % NORMAL_MODES;
+    set_shift_mode(current_shift_mode);
+}
+
+inline int16_t convertPixel(int16_t luma) {
+    return tft.color565(
+            (luma >> red_shift_down) << red_shift_up,
+            (luma >> green_shift_down) << green_shift_up,
+            (luma >> blue_shift_down) << blue_shift_up);
 }
 
 void show_frame(plm_frame_t *frame) {
+    bool rainbowMode = current_shift_mode == RAINBOW_MODE;
     tft.startWrite();
     tft.setAddrWindow(0, 0, WIDTH, HEIGHT);
     int numPixels = WIDTH * HEIGHT;
     int i = 0;
     for (int y = 0; y < HEIGHT; ++y) {
+        if (rainbowMode)
+            set_shift_mode((y / 40) + PRIDE_START);
         for (int x = 0; x < WIDTH; ++x) {
             uint32_t luma = frame->y.data[++i];
             tft.pushColor(convertPixel(luma));
@@ -74,7 +119,10 @@ void play_video() {
     // Decode forever until power is removed
     while (true) {
         // pause when user button held
-       while (digitalRead(USER_BUTTON) == false) {}
+        if (digitalRead(USER_BUTTON) == false) {
+            next_shift_mode();
+            while (digitalRead(USER_BUTTON) == false) {}
+        }
         auto *frame = plm_decode_video(plm);
         if (frame) show_frame(frame);
 
@@ -92,6 +140,7 @@ void setup() {
     Serial.println("starting on Pico");
     tft.init();
     tft.fillScreen(TFT_BLACK);
+    next_shift_mode(); // set to gray to start
     play_video();
 }
 
