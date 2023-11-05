@@ -134,6 +134,36 @@ void play_video() {
     }
 }
 
+void show_static_frame() {
+    bool rainbowMode = current_shift_mode == RAINBOW_MODE;
+    tft.startWrite();
+    tft.setAddrWindow(0, 0, WIDTH, HEIGHT);
+    int numPixels = WIDTH * HEIGHT;
+    int i = 0;
+    for (int y = 0; y < HEIGHT; ++y) {
+        if (rainbowMode)
+            set_shift_mode((y / 40) + PRIDE_START);
+        for (int x = 0; x < WIDTH; ++x) {
+            uint32_t luma = random(256);
+            tft.pushColor(convertPixel(luma));
+        }
+    }
+    tft.endWrite();
+}
+
+void play_static(int msDuration) {
+    auto now = millis();
+    auto last_time = now;
+    auto endTime = now + msDuration;
+    while ((now = millis()) < endTime) {
+        show_static_frame();
+        if (now - last_time < MS_PER_FRAME) {
+            delay(MS_PER_FRAME - (now - last_time));
+        }
+        last_time = now;
+    }
+}
+
 void setup() {
     Serial.begin(19200);
     // while (!Serial) {}
@@ -141,6 +171,7 @@ void setup() {
     tft.init();
     tft.fillScreen(TFT_BLACK);
     next_shift_mode(); // set to gray to start
+    play_static(1000);
     play_video();
 }
 
