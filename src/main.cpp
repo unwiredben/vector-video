@@ -27,7 +27,7 @@ void* my_realloc(const char* what, void* ptr, std::size_t new_size) {
 #include "pl_mpeg.h"
 
 #include "st_intro_color.h"
-#include "rickroll.h"
+#include "rickroll_wide.h"
 
 constexpr int WIDTH = 240;
 constexpr int HEIGHT = 240;
@@ -87,14 +87,16 @@ inline int16_t convertPixel(int16_t luma) {
 
 void show_frame(plm_frame_t *frame) {
     bool rainbowMode = current_shift_mode == RAINBOW_MODE;
+    int width = frame->width;
+    int height = frame->height;
     tft.startWrite();
-    tft.setAddrWindow(0, 0, WIDTH, HEIGHT);
-    int numPixels = WIDTH * HEIGHT;
+    tft.setAddrWindow(0, (HEIGHT - height) / 2, width, height);
+    int numPixels = width * height;
     int i = 0;
-    for (int y = 0; y < HEIGHT; ++y) {
+    for (int y = 0; y < height; ++y) {
         if (rainbowMode)
             set_shift_mode((y / 40) + PRIDE_START);
-        for (int x = 0; x < WIDTH; ++x) {
+        for (int x = 0; x < width; ++x) {
             uint32_t luma = frame->y.data[++i];
             tft.pushColor(convertPixel(luma));
         }
@@ -102,7 +104,7 @@ void show_frame(plm_frame_t *frame) {
     tft.endWrite();
 }
 
-void play_video(uint8_t const* data, size_t len, bool loop) {
+void play_mono_video(uint8_t const* data, size_t len, bool loop) {
     plm_t *plm =
         plm_create_with_memory(
                 const_cast<uint8_t*>(data),
@@ -112,7 +114,6 @@ void play_video(uint8_t const* data, size_t len, bool loop) {
     plm_set_audio_enabled(plm, false);
     plm_set_loop(plm, loop);
 
-    int frame_count = 0;
     auto last_time = millis();
 
     // Decode forever until power is removed
@@ -136,6 +137,74 @@ void play_video(uint8_t const* data, size_t len, bool loop) {
     }
     plm_destroy(plm);
 }
+
+int16_t yuv_to_rgb(int y, int cr, int cb) {
+	y = ((y - 16) * 76309) >> 16;
+	cr -= 128;
+    cb -= 128;
+    int r = (cr * 104597) >> 16;
+    int g = (cb * 25674 + cr * 53278) >> 16;
+    int b = (cb * 132201) >> 16;
+    r = plm_clamp(y + r);
+	g = plm_clamp(y - g);
+	b = plm_clamp(y + b);
+    return tft.color565(r, g, b);
+}
+
+void show_color_frame(plm_frame_t *frame) {
+    tft.startWrite();
+    int width = frame->width;
+    int height = frame->height;
+    tft.setAddrWindow(0, (HEIGHT - height) / 2, width, height);
+    int numPixels = width * height;
+    int y_index = 0;
+    int c_index = 0;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            tft.pushColor(yuv_to_rgb(
+                frame->y.data[y_index],
+                frame->cr.data[c_index],
+                frame->cb.data[c_index]));
+            ++y_index;
+            if ((x & 1) == 1) ++c_index;
+        }
+        if ((y & 1) == 0) c_index -= width / 2;
+    }
+    tft.endWrite();
+}
+
+void play_color_video(uint8_t const* data, size_t len, bool loop) {
+    plm_t *plm =
+        plm_create_with_memory(
+                const_cast<uint8_t*>(data),
+                len,
+                false, false);
+
+    plm_set_audio_enabled(plm, false);
+    plm_set_loop(plm, loop);
+
+    auto last_time = millis();
+
+    // Decode forever until power is removed
+    while (true) {
+        // pause when user button held
+        while (digitalRead(USER_BUTTON) == false) {}
+
+        auto *frame = plm_decode_video(plm);
+        if (frame) show_color_frame(frame);
+
+        auto now = millis();
+        if (now - last_time < MS_PER_FRAME) {
+            delay(MS_PER_FRAME - (now - last_time));
+        }
+        last_time = now;
+
+        // if not looping, NULL frame means end
+        if (!loop && !frame) break;
+    }
+    plm_destroy(plm);
+}
+
 
 void show_static_frame() {
     bool rainbowMode = current_shift_mode == RAINBOW_MODE;
@@ -178,8 +247,10 @@ void setup() {
 
 void loop() {
     play_static(500);
-    play_video(st_intro_color_mpg, st_intro_color_mpg_len, false);
+    tft.fillScreen(TFT_BLACK);
+    play_color_video(rickroll_wide_mpg, rickroll_wide_mpg_len, false);
     play_static(500);
-    play_video(rickroll_mpg, rickroll_mpg_len, false);
+    tft.fillScreen(TFT_BLACK);
+    play_mono_video(st_intro_color_mpg, st_intro_color_mpg_len, false);
 }
 

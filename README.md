@@ -36,6 +36,18 @@ Color
 ffmpeg -i INPUT.mp4 -vf "crop=in_h" -an -t 00:00:20 -s 240x240 -vcodec mpeg1video OUTPUT.mpg
 ```
 
+Color 4:3
+
+```
+ffmpeg -i INPUT.mp4 -vf "crop=4*ih/3:ih" -an -t 00:00:20 -s 240x180 -vcodec mpeg1video OUTPUT.mpg
+```
+
+Color 4:3 with a little side cropping
+
+```
+ffmpeg -i INPUT.mp4 -vf "crop=4*(ih-40)/3:(ih-40)" -an -t 00:00:20 -s 240x180 OUTPUT.mpg
+```
+
 In my testing, I usually made smaller MPEG-1 files in color mode; it may be that the
 video filtering to remove hue is adding noise to the original video.
 
