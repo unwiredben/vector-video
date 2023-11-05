@@ -9,6 +9,10 @@ When I tried to use my code, I quickly ran into memory allocation failures, as t
 After looking for optimizations, I decided that I needed to modify the library to run in "luma-only" mode, where only the Y plane was being decoded.  I got this working fairly
 quickly, but had a lingering display bug caused by exiting the Cr/Cb render stage a litle too early that I nailed down on Saturday night.
 
+# Social Media Updates
+
+https://nycr.social/@unwiredben/111356286237886104 has my first public video teaser.
+
 # Links
 
 * https://hackaday.com/2023/10/18/2023-hackaday-supercon-badge-welcome-to-the-vectorscope/
