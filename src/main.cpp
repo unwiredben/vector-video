@@ -36,8 +36,6 @@ constexpr int HEIGHT = 240;
 
 constexpr int MS_PER_FRAME = 33;
 
-constexpr int USER_BUTTON = 19;
-
 TFT_eSPI tft = TFT_eSPI();
 
 int current_shift_mode = -1;
@@ -119,10 +117,13 @@ void play_mono_video(uint8_t const* data, size_t len, bool loop) {
     // Decode forever until power is removed
     while (true) {
         // pause when user button held
+#ifdef USER_BUTTON
         if (digitalRead(USER_BUTTON) == false) {
             next_shift_mode();
             while (digitalRead(USER_BUTTON) == false) {}
         }
+#endif
+
         auto *frame = plm_decode_video(plm);
         if (frame) show_frame(frame);
 
@@ -188,8 +189,9 @@ void play_color_video(uint8_t const* data, size_t len, bool loop) {
     // Decode forever until power is removed
     while (true) {
         // pause when user button held
+#ifdef USER_BUTTON
         while (digitalRead(USER_BUTTON) == false) {}
-
+#endif
         auto *frame = plm_decode_video(plm);
         if (frame) show_color_frame(frame);
 
@@ -225,7 +227,11 @@ void play_static(int msDuration) {
     auto now = millis();
     auto last_time = now;
     auto endTime = now + msDuration;
-    while ((now = millis()) < endTime || !digitalRead(USER_BUTTON)) {
+    while ((now = millis()) < endTime
+#ifdef USER_BUTTON
+        || !digitalRead(USER_BUTTON)
+#endif
+        ) {
         show_static_frame();
         if (now - last_time < MS_PER_FRAME) {
             delay(MS_PER_FRAME - (now - last_time));
@@ -239,10 +245,20 @@ void play_static(int msDuration) {
 bool demo_mode = false;
 
 void setup() {
+#ifdef USER_BUTTON
     demo_mode = !digitalRead(USER_BUTTON);
     while (digitalRead(USER_BUTTON) == false) {}
+#else
+    demo_mode = true;
+#endif
+
+#ifdef TFT_BL
+    pinMode(TFT_BL, OUTPUT);
+    digitalWrite(TFT_BL, 1);
+#endif
+
     Serial.begin(19200);
-    // while (!Serial) {}
+    while (!Serial) {}
     Serial.println("starting on Pico");
     tft.init();
     tft.fillScreen(TFT_BLACK);
