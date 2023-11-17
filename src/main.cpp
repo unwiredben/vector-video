@@ -258,7 +258,7 @@ void setup() {
 #endif
 
     Serial.begin(19200);
-    while (!Serial) {}
+    // while (!Serial) {}
     Serial.println("starting on Pico");
     tft.init();
     tft.fillScreen(TFT_BLACK);
